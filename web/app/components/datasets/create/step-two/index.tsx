@@ -263,6 +263,7 @@ const StepTwo = ({
       provider: 'firecrawl',
       job_id: fireCrawlJobId,
       urls: websitePages.map(page => page.source_url),
+      titles: websitePages.map(page => page.title),
       only_main_content: crawlOptions?.only_main_content,
     }
   }
@@ -893,6 +894,7 @@ const StepTwo = ({
                     <div className='mb-2 text-xs font-medium text-gray-500'>{t('datasetCreation.stepTwo.websiteSource')}</div>
                     <div className='flex items-center text-sm leading-6 font-medium text-gray-800'>
                       <Globe01 className='shrink-0 mr-1' />
+                      <span className='grow w-0 truncate'>{websitePages[0].title}</span>
                       <span className='grow w-0 truncate'>{websitePages[0].source_url}</span>
                       {websitePages.length > 1 && (
                         <span className={s.sourceCount}>

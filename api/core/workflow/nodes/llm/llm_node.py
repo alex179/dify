@@ -443,6 +443,7 @@ class LLMNode(BaseNode):
                 "document_id": metadata.get("document_id"),
                 "document_name": metadata.get("document_name"),
                 "data_source_type": metadata.get("document_data_source_type"),
+                "data_source_info": metadata.get("document_data_source_info"),
                 "segment_id": metadata.get("segment_id"),
                 "retriever_from": metadata.get("retriever_from"),
                 "score": metadata.get("score"),

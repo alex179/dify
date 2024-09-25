@@ -198,6 +198,7 @@ class KnowledgeRetrievalNode(BaseNode):
                                 "document_id": document.id,
                                 "document_name": document.name,
                                 "document_data_source_type": document.data_source_type,
+                                "document_data_source_info": document.data_source_info,
                                 "segment_id": segment.id,
                                 "retriever_from": "workflow",
                                 "score": document_score_list.get(segment.index_node_id, None),

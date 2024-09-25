@@ -829,7 +829,8 @@ class DocumentService:
             elif document_data["data_source"]["type"] == "website_crawl":
                 website_info = document_data["data_source"]["info_list"]["website_info_list"]
                 urls = website_info["urls"]
-                for url in urls:
+                titles = website_info["titles"]
+                for index, url in enumerate(urls):
                     data_source_info = {
                         "url": url,
                         "provider": website_info["provider"],
@@ -837,10 +838,14 @@ class DocumentService:
                         "only_main_content": website_info.get("only_main_content", False),
                         "mode": "crawl",
                     }
-                    if len(url) > 255:
-                        document_name = url[:200] + "..."
+
+                    title = titles[index] if index < len(titles) and titles[index] else url
+
+                    if len(title) > 255:
+                        document_name = title[:200] + "..."
                     else:
-                        document_name = url
+                        document_name = title
+
                     document = DocumentService.build_document(
                         dataset,
                         dataset_process_rule.id,

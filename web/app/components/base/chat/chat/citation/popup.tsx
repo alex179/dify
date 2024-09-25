@@ -49,7 +49,23 @@ const Popup: FC<PopupProps> = ({
       <PortalToFollowElemTrigger onClick={() => setOpen(v => !v)}>
         <div className='flex items-center px-2 max-w-[240px] h-7 bg-white rounded-lg'>
           <FileIcon type={fileType} className='shrink-0 mr-1 w-4 h-4' />
-          <div className='text-xs text-gray-600 truncate'>{data.documentName}</div>
+
+          {
+          data.dataSourceType === 'website_crawl' ? (
+            <a
+              href={JSON.parse(data.dataSourceInfo)?.url} // 解析 dataSourceInfo 获取 URL
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-xs font-medium text-blue-600 truncate'
+            >
+              {data.documentName}
+            </a>
+          ) : (
+            <div className='text-xs text-gray-600 truncate'>{data.documentName}</div>
+          )
+        }
+
+          
         </div>
       </PortalToFollowElemTrigger>
       <PortalToFollowElemContent style={{ zIndex: 1000 }}>

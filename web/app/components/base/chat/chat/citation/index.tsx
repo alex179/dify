@@ -9,6 +9,7 @@ export type Resources = {
   documentId: string
   documentName: string
   dataSourceType: string
+  dataSourceInfo: string
   sources: CitationItem[]
 }
 
@@ -31,6 +32,7 @@ const Citation: FC<CitationProps> = ({
     const documentName = next.document_name
     const dataSourceType = next.data_source_type
     const documentIndex = prev.findIndex(i => i.documentId === documentId)
+    const dataSourceInfo = next.data_source_info
 
     if (documentIndex > -1) {
       prev[documentIndex].sources.push(next)
@@ -40,6 +42,7 @@ const Citation: FC<CitationProps> = ({
         documentId,
         documentName,
         dataSourceType,
+        dataSourceInfo,
         sources: [next],
       })
     }

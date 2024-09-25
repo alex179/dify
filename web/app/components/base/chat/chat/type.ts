@@ -48,6 +48,7 @@ export type ThoughtItem = {
 export type CitationItem = {
   content: string
   data_source_type: string
+  data_source_info: string
   dataset_name: string
   dataset_id: string
   document_id: string
