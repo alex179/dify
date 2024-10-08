@@ -292,7 +292,12 @@ class IndexingRunner:
         self, index_processor: BaseIndexProcessor, dataset_document: DatasetDocument, process_rule: dict
     ) -> list[Document]:
         # load file
-        if dataset_document.data_source_type not in {"upload_file", "notion_import", "website_crawl"}:
+        if dataset_document.data_source_type not in {
+            "upload_file",
+            "notion_import",
+            "website_crawl",
+            "database_import"
+        }:
             return []
 
         data_source_info = dataset_document.data_source_info_dict
@@ -346,6 +351,28 @@ class IndexingRunner:
                     "url": data_source_info["url"],
                     "mode": data_source_info["mode"],
                     "only_main_content": data_source_info["only_main_content"],
+                },
+                document_model=dataset_document.doc_form,
+            )
+            text_docs = index_processor.extract(extract_setting, process_rule_mode=process_rule["mode"])
+        elif dataset_document.data_source_type == "database_import":
+            if (
+                    not data_source_info
+                    or "provider" not in data_source_info
+                    or "url" not in data_source_info
+                    or "job_id" not in data_source_info
+            ):
+                raise ValueError("no website import info found")
+            extract_setting = ExtractSetting(
+                datasource_type="database_import",
+                website_info={
+                    "provider": data_source_info["provider"],
+                    "job_id": data_source_info["job_id"],
+                    "tenant_id": dataset_document.tenant_id,
+                    "url": data_source_info["url"],
+                    "mode": data_source_info["mode"],
+                    "only_main_content": data_source_info["only_main_content"],
+                    "text_doc": data_source_info["text_doc"],
                 },
                 document_model=dataset_document.doc_form,
             )

@@ -49,23 +49,36 @@ const Popup: FC<PopupProps> = ({
       <PortalToFollowElemTrigger onClick={() => setOpen(v => !v)}>
         <div className='flex items-center px-2 max-w-[240px] h-7 bg-white rounded-lg'>
           <FileIcon type={fileType} className='shrink-0 mr-1 w-4 h-4' />
-
           {
-          data.dataSourceType === 'website_crawl' ? (
-            <a
-              href={JSON.parse(data.dataSourceInfo)?.url} // 解析 dataSourceInfo 获取 URL
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-xs font-medium text-blue-600 truncate'
-            >
-              {data.documentName}
-            </a>
-          ) : (
-            <div className='text-xs text-gray-600 truncate'>{data.documentName}</div>
-          )
-        }
-
-          
+            (data.dataSourceType === 'website_crawl' || data.dataSourceType === 'database_import')
+              ? (
+                <a
+                  href={(() => {
+                    try {
+                    // 如果 dataSourceInfo 是字符串且有效，则解析
+                      if (typeof data.dataSourceInfo === 'string' && data.dataSourceInfo.trim()) {
+                        const parsedData = JSON.parse(data.dataSourceInfo)
+                        return parsedData?.url || '#' // 如果解析成功，返回 url，否则返回 '#'
+                      }
+                      // 如果 dataSourceInfo 无效，返回默认链接
+                      return '#'
+                    }
+                    catch (e) {
+                      console.error('Failed to parse dataSourceInfo:', e)
+                      return '#' // 如果解析失败，返回默认链接
+                    }
+                  })()}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-xs font-medium text-blue-600 truncate'
+                >
+                  {data.documentName}
+                </a>
+              )
+              : (
+                <div className='text-xs text-gray-600 truncate'>{data.documentName}</div>
+              )
+          }
         </div>
       </PortalToFollowElemTrigger>
       <PortalToFollowElemContent style={{ zIndex: 1000 }}>

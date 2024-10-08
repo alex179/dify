@@ -234,6 +234,117 @@ class DocumentUpdateByFileApi(DatasetApiResource):
         return documents_and_batch_fields, 200
 
 
+class DocumentAddByJsonApi(DatasetApiResource):
+    """Resource for json documents."""
+
+    @cloud_edition_billing_resource_check("vector_space", "dataset")
+    @cloud_edition_billing_resource_check("documents", "dataset")
+    def post(self, tenant_id, dataset_id):
+        """Create document by text."""
+
+        parser = reqparse.RequestParser()
+        parser.add_argument("name", type=str, required=True, nullable=False, location="json")
+        parser.add_argument("text", type=str, required=True, nullable=False, location="json")
+        parser.add_argument("process_rule", type=dict, required=False, nullable=True, location="json")
+        parser.add_argument("original_document_id", type=str, required=False, location="json")
+        parser.add_argument("doc_form", type=str, default="text_model", required=False, nullable=False, location="json")
+        parser.add_argument(
+            "doc_language", type=str, default="English", required=False, nullable=False, location="json"
+        )
+        parser.add_argument(
+            "indexing_technique", type=str, choices=Dataset.INDEXING_TECHNIQUE_LIST, nullable=False, location="json"
+        )
+        parser.add_argument("retrieval_model", type=dict, required=False, nullable=False, location="json")
+        parser.add_argument("urls", type=list, required=True, nullable=False, location="json")
+        parser.add_argument("titles", type=list, required=True, nullable=False, location="json")
+        parser.add_argument("provider", type=str, required=True, nullable=False, location="json")
+        parser.add_argument("only_main_content", type=bool, required=False, nullable=True, location="json")
+        parser.add_argument("job_id", type=str, required=False, nullable=True, location="json")
+
+        args = parser.parse_args()
+        dataset_id = str(dataset_id)
+        tenant_id = str(tenant_id)
+        if "doc_form" not in args:
+            args["doc_form"] = "text_model"
+        dataset = db.session.query(Dataset).filter(Dataset.tenant_id == tenant_id, Dataset.id == dataset_id).first()
+
+        print(f"args: {args}")
+
+        if not dataset:
+            raise ValueError("Dataset is not exist.")
+
+        if not dataset.indexing_technique and not args["indexing_technique"]:
+            raise ValueError("indexing_technique is required.")
+
+        upload_file = FileService.upload_text(args.get("text"), args.get("name"))
+        data_source = {
+            "type": "database_import",
+            "info_list": {"website_info_list": {
+                "urls": args.get("urls"),
+                "titles": args.get("titles"),
+                "provider": args.get("provider"),
+                "only_main_content": args.get("only_main_content"),
+                "job_id": args.get("job_id")
+            }},
+        }
+        args["data_source"] = data_source
+        # validate args
+        DocumentService.document_create_args_validate(args)
+
+        try:
+            documents, batch = DocumentService.save_document_with_dataset_id(
+                dataset=dataset,
+                document_data=args,
+                account=current_user,
+                dataset_process_rule=dataset.latest_process_rule if "process_rule" not in args else None,
+                created_from="api",
+            )
+        except ProviderTokenNotInitError as ex:
+            raise ProviderNotInitializeError(ex.description)
+        document = documents[0]
+
+        documents_and_batch_fields = {"document": marshal(document, document_fields), "batch": batch}
+        return documents_and_batch_fields, 200
+
+
+class DocumentUpdateByJsonApi(DatasetApiResource):
+    """Resource for update documents."""
+
+    @cloud_edition_billing_resource_check("vector_space", "dataset")
+    def post(self, tenant_id, dataset_id, document_id):
+        """Update document by json."""
+        args = request.get_json()
+        if "doc_form" not in args:
+            args["doc_form"] = "text_model"
+        if "doc_language" not in args:
+            args["doc_language"] = "English"
+
+        # get dataset info
+        dataset_id = str(dataset_id)
+        tenant_id = str(tenant_id)
+        dataset = db.session.query(Dataset).filter(Dataset.tenant_id == tenant_id, Dataset.id == dataset_id).first()
+
+        if not dataset:
+            raise ValueError("Dataset is not exist.")
+        # validate args
+        args["original_document_id"] = str(document_id)
+        DocumentService.document_create_args_validate(args)
+
+        try:
+            documents, batch = DocumentService.save_document_with_dataset_id(
+                dataset=dataset,
+                document_data=args,
+                account=current_user,
+                dataset_process_rule=dataset.latest_process_rule if "process_rule" not in args else None,
+                created_from="api",
+            )
+        except ProviderTokenNotInitError as ex:
+            raise ProviderNotInitializeError(ex.description)
+        document = documents[0]
+        documents_and_batch_fields = {"document": marshal(document, document_fields), "batch": batch}
+        return documents_and_batch_fields, 200
+
+
 class DocumentDeleteApi(DatasetApiResource):
     def delete(self, tenant_id, dataset_id, document_id):
         """Delete document."""
@@ -333,6 +444,7 @@ class DocumentIndexingStatusApi(DatasetApiResource):
 
 api.add_resource(DocumentAddByTextApi, "/datasets/<uuid:dataset_id>/document/create_by_text")
 api.add_resource(DocumentAddByFileApi, "/datasets/<uuid:dataset_id>/document/create_by_file")
+api.add_resource(DocumentAddByJsonApi, "/datasets/<uuid:dataset_id>/document/create_by_json")
 api.add_resource(DocumentUpdateByTextApi, "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/update_by_text")
 api.add_resource(DocumentUpdateByFileApi, "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/update_by_file")
 api.add_resource(DocumentDeleteApi, "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>")

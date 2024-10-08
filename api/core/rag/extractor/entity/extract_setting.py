@@ -33,9 +33,20 @@ class WebsiteInfo(BaseModel):
     mode: str
     tenant_id: str
     only_main_content: bool = False
+    text_doc: str = None
 
     class Config:
         arbitrary_types_allowed = True
+
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+
+
+class StringInfo(BaseModel):
+    """
+    String import info.
+    """
+    text: str
 
     def __init__(self, **data) -> None:
         super().__init__(**data)
@@ -51,6 +62,7 @@ class ExtractSetting(BaseModel):
     notion_info: Optional[NotionInfo] = None
     website_info: Optional[WebsiteInfo] = None
     document_model: Optional[str] = None
+    string_info: Optional[StringInfo] = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def __init__(self, **data) -> None:

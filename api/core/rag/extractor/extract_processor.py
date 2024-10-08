@@ -15,6 +15,7 @@ from core.rag.extractor.html_extractor import HtmlExtractor
 from core.rag.extractor.markdown_extractor import MarkdownExtractor
 from core.rag.extractor.notion_extractor import NotionExtractor
 from core.rag.extractor.pdf_extractor import PdfExtractor
+from core.rag.extractor.string_extractor import StringExtractor
 from core.rag.extractor.text_extractor import TextExtractor
 from core.rag.extractor.unstructured.unstructured_eml_extractor import UnstructuredEmailExtractor
 from core.rag.extractor.unstructured.unstructured_epub_extractor import UnstructuredEpubExtractor
@@ -173,5 +174,12 @@ class ExtractProcessor:
                 return extractor.extract()
             else:
                 raise ValueError(f"Unsupported website provider: {extract_setting.website_info.provider}")
+        elif extract_setting.datasource_type == DatasourceType.Database.value:
+            if extract_setting.website_info.provider == "database_import":
+                extractor = StringExtractor(extract_setting.website_info.text_doc, autodetect_encoding=True)
+                return extractor.extract()
+            else:
+                raise ValueError(f"Unsupported website provider: {extract_setting.website_info.provider}")
+
         else:
             raise ValueError(f"Unsupported datasource type: {extract_setting.datasource_type}")

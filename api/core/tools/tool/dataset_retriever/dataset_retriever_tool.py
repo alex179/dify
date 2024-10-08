@@ -127,6 +127,7 @@ class DatasetRetrieverTool(DatasetRetrieverBaseTool):
                                 "document_id": document.id,
                                 "document_name": document.name,
                                 "data_source_type": document.data_source_type,
+                                "data_source_info": document.data_source_info,
                                 "segment_id": segment.id,
                                 "retriever_from": self.retriever_from,
                                 "score": document_score_list.get(segment.index_node_id, None),

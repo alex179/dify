@@ -137,7 +137,8 @@ class DatasetService:
 
     @staticmethod
     def create_empty_dataset(
-        tenant_id: str, name: str, indexing_technique: Optional[str], account: Account, permission: Optional[str] = None
+            tenant_id: str, name: str, indexing_technique: Optional[str], account: Account,
+            permission: Optional[str] = None
     ):
         # check if dataset name already exists
         if Dataset.query.filter_by(name=name, tenant_id=tenant_id).first():
@@ -240,8 +241,8 @@ class DatasetService:
                     raise ValueError(ex.description)
         else:
             if (
-                data["embedding_model_provider"] != dataset.embedding_model_provider
-                or data["embedding_model"] != dataset.embedding_model
+                    data["embedding_model_provider"] != dataset.embedding_model_provider
+                    or data["embedding_model"] != dataset.embedding_model
             ):
                 action = "update"
                 try:
@@ -323,7 +324,7 @@ class DatasetService:
 
         elif dataset.permission == DatasetPermissionEnum.PARTIAL_TEAM:
             if not any(
-                dp.dataset_id == dataset.id for dp in DatasetPermission.query.filter_by(account_id=user.id).all()
+                    dp.dataset_id == dataset.id for dp in DatasetPermission.query.filter_by(account_id=user.id).all()
             ):
                 raise NoPermissionError("You do not have permission to access this dataset.")
 
@@ -621,11 +622,11 @@ class DocumentService:
 
     @staticmethod
     def save_document_with_dataset_id(
-        dataset: Dataset,
-        document_data: dict,
-        account: Account,
-        dataset_process_rule: Optional[DatasetProcessRule] = None,
-        created_from: str = "web",
+            dataset: Dataset,
+            document_data: dict,
+            account: Account,
+            dataset_process_rule: Optional[DatasetProcessRule] = None,
+            created_from: str = "web",
     ):
         # check document limit
         features = FeatureService.get_features(current_user.current_tenant_id)
@@ -655,8 +656,8 @@ class DocumentService:
 
         if not dataset.indexing_technique:
             if (
-                "indexing_technique" not in document_data
-                or document_data["indexing_technique"] not in Dataset.INDEXING_TECHNIQUE_LIST
+                    "indexing_technique" not in document_data
+                    or document_data["indexing_technique"] not in Dataset.INDEXING_TECHNIQUE_LIST
             ):
                 raise ValueError("Indexing technique is required")
 
@@ -864,6 +865,45 @@ class DocumentService:
                     document_ids.append(document.id)
                     documents.append(document)
                     position += 1
+            elif document_data["data_source"]["type"] == "database_import":
+                website_info = document_data["data_source"]["info_list"]["website_info_list"]
+                urls = website_info["urls"]
+                titles = website_info["titles"]
+                for index, url in enumerate(urls):
+                    data_source_info = {
+                        "url": url,
+                        "provider": website_info["provider"],
+                        "job_id": website_info["job_id"],
+                        "only_main_content": website_info.get("only_main_content", False),
+                        "mode": "database_import",
+                        "text_doc": document_data["text"],
+                    }
+
+                    title = titles[index] if index < len(titles) and titles[index] else url
+
+                    if len(title) > 255:
+                        document_name = title[:200] + "..."
+                    else:
+                        document_name = title
+
+                    document = DocumentService.build_document(
+                        dataset,
+                        dataset_process_rule.id,
+                        document_data["data_source"]["type"],
+                        document_data["doc_form"],
+                        document_data["doc_language"],
+                        data_source_info,
+                        created_from,
+                        position,
+                        account,
+                        document_name,
+                        batch,
+                    )
+                    db.session.add(document)
+                    db.session.flush()
+                    document_ids.append(document.id)
+                    documents.append(document)
+                    position += 1
             db.session.commit()
 
             # trigger async task
@@ -884,17 +924,17 @@ class DocumentService:
 
     @staticmethod
     def build_document(
-        dataset: Dataset,
-        process_rule_id: str,
-        data_source_type: str,
-        document_form: str,
-        document_language: str,
-        data_source_info: dict,
-        created_from: str,
-        position: int,
-        account: Account,
-        name: str,
-        batch: str,
+            dataset: Dataset,
+            process_rule_id: str,
+            data_source_type: str,
+            document_form: str,
+            document_language: str,
+            data_source_info: dict,
+            created_from: str,
+            position: int,
+            account: Account,
+            name: str,
+            batch: str,
     ):
         document = Document(
             tenant_id=dataset.tenant_id,
@@ -924,11 +964,11 @@ class DocumentService:
 
     @staticmethod
     def update_document_with_dataset_id(
-        dataset: Dataset,
-        document_data: dict,
-        account: Account,
-        dataset_process_rule: Optional[DatasetProcessRule] = None,
-        created_from: str = "web",
+            dataset: Dataset,
+            document_data: dict,
+            account: Account,
+            dataset_process_rule: Optional[DatasetProcessRule] = None,
+            created_from: str = "web",
     ):
         DatasetService.check_dataset_model_setting(dataset)
         document = DocumentService.get_document(dataset.id, document_data["original_document_id"])
@@ -1106,7 +1146,7 @@ class DocumentService:
             DocumentService.process_rule_args_validate(args)
         else:
             if ("data_source" not in args and not args["data_source"]) and (
-                "process_rule" not in args and not args["process_rule"]
+                    "process_rule" not in args and not args["process_rule"]
             ):
                 raise ValueError("Data source or Process rule is required")
             else:
@@ -1134,20 +1174,20 @@ class DocumentService:
 
         if args["data_source"]["type"] == "upload_file":
             if (
-                "file_info_list" not in args["data_source"]["info_list"]
-                or not args["data_source"]["info_list"]["file_info_list"]
+                    "file_info_list" not in args["data_source"]["info_list"]
+                    or not args["data_source"]["info_list"]["file_info_list"]
             ):
                 raise ValueError("File source info is required")
         if args["data_source"]["type"] == "notion_import":
             if (
-                "notion_info_list" not in args["data_source"]["info_list"]
-                or not args["data_source"]["info_list"]["notion_info_list"]
+                    "notion_info_list" not in args["data_source"]["info_list"]
+                    or not args["data_source"]["info_list"]["notion_info_list"]
             ):
                 raise ValueError("Notion source info is required")
         if args["data_source"]["type"] == "website_crawl":
             if (
-                "website_info_list" not in args["data_source"]["info_list"]
-                or not args["data_source"]["info_list"]["website_info_list"]
+                    "website_info_list" not in args["data_source"]["info_list"]
+                    or not args["data_source"]["info_list"]["website_info_list"]
             ):
                 raise ValueError("Website source info is required")
 
@@ -1175,8 +1215,8 @@ class DocumentService:
                 raise ValueError("Process rule rules is invalid")
 
             if (
-                "pre_processing_rules" not in args["process_rule"]["rules"]
-                or args["process_rule"]["rules"]["pre_processing_rules"] is None
+                    "pre_processing_rules" not in args["process_rule"]["rules"]
+                    or args["process_rule"]["rules"]["pre_processing_rules"] is None
             ):
                 raise ValueError("Process rule pre_processing_rules is required")
 
@@ -1202,8 +1242,8 @@ class DocumentService:
             args["process_rule"]["rules"]["pre_processing_rules"] = list(unique_pre_processing_rule_dicts.values())
 
             if (
-                "segmentation" not in args["process_rule"]["rules"]
-                or args["process_rule"]["rules"]["segmentation"] is None
+                    "segmentation" not in args["process_rule"]["rules"]
+                    or args["process_rule"]["rules"]["segmentation"] is None
             ):
                 raise ValueError("Process rule segmentation is required")
 
@@ -1211,8 +1251,8 @@ class DocumentService:
                 raise ValueError("Process rule segmentation is invalid")
 
             if (
-                "separator" not in args["process_rule"]["rules"]["segmentation"]
-                or not args["process_rule"]["rules"]["segmentation"]["separator"]
+                    "separator" not in args["process_rule"]["rules"]["segmentation"]
+                    or not args["process_rule"]["rules"]["segmentation"]["separator"]
             ):
                 raise ValueError("Process rule segmentation separator is required")
 
@@ -1220,8 +1260,8 @@ class DocumentService:
                 raise ValueError("Process rule segmentation separator is invalid")
 
             if (
-                "max_tokens" not in args["process_rule"]["rules"]["segmentation"]
-                or not args["process_rule"]["rules"]["segmentation"]["max_tokens"]
+                    "max_tokens" not in args["process_rule"]["rules"]["segmentation"]
+                    or not args["process_rule"]["rules"]["segmentation"]["max_tokens"]
             ):
                 raise ValueError("Process rule segmentation max_tokens is required")
 
@@ -1258,8 +1298,8 @@ class DocumentService:
                 raise ValueError("Process rule rules is invalid")
 
             if (
-                "pre_processing_rules" not in args["process_rule"]["rules"]
-                or args["process_rule"]["rules"]["pre_processing_rules"] is None
+                    "pre_processing_rules" not in args["process_rule"]["rules"]
+                    or args["process_rule"]["rules"]["pre_processing_rules"] is None
             ):
                 raise ValueError("Process rule pre_processing_rules is required")
 
@@ -1285,8 +1325,8 @@ class DocumentService:
             args["process_rule"]["rules"]["pre_processing_rules"] = list(unique_pre_processing_rule_dicts.values())
 
             if (
-                "segmentation" not in args["process_rule"]["rules"]
-                or args["process_rule"]["rules"]["segmentation"] is None
+                    "segmentation" not in args["process_rule"]["rules"]
+                    or args["process_rule"]["rules"]["segmentation"] is None
             ):
                 raise ValueError("Process rule segmentation is required")
 
@@ -1294,8 +1334,8 @@ class DocumentService:
                 raise ValueError("Process rule segmentation is invalid")
 
             if (
-                "separator" not in args["process_rule"]["rules"]["segmentation"]
-                or not args["process_rule"]["rules"]["segmentation"]["separator"]
+                    "separator" not in args["process_rule"]["rules"]["segmentation"]
+                    or not args["process_rule"]["rules"]["segmentation"]["separator"]
             ):
                 raise ValueError("Process rule segmentation separator is required")
 
@@ -1303,8 +1343,8 @@ class DocumentService:
                 raise ValueError("Process rule segmentation separator is invalid")
 
             if (
-                "max_tokens" not in args["process_rule"]["rules"]["segmentation"]
-                or not args["process_rule"]["rules"]["segmentation"]["max_tokens"]
+                    "max_tokens" not in args["process_rule"]["rules"]["segmentation"]
+                    or not args["process_rule"]["rules"]["segmentation"]["max_tokens"]
             ):
                 raise ValueError("Process rule segmentation max_tokens is required")
 
@@ -1561,7 +1601,7 @@ class SegmentService:
 class DatasetCollectionBindingService:
     @classmethod
     def get_dataset_collection_binding(
-        cls, provider_name: str, model_name: str, collection_type: str = "dataset"
+            cls, provider_name: str, model_name: str, collection_type: str = "dataset"
     ) -> DatasetCollectionBinding:
         dataset_collection_binding = (
             db.session.query(DatasetCollectionBinding)
@@ -1587,7 +1627,7 @@ class DatasetCollectionBindingService:
 
     @classmethod
     def get_dataset_collection_binding_by_id_and_type(
-        cls, collection_binding_id: str, collection_type: str = "dataset"
+            cls, collection_binding_id: str, collection_type: str = "dataset"
     ) -> DatasetCollectionBinding:
         dataset_collection_binding = (
             db.session.query(DatasetCollectionBinding)
